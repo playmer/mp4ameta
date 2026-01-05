@@ -79,6 +79,8 @@ impl ParseAtom for Chpl<'_> {
     }
 }
 
+const VERSION: i32 = 1;
+
 impl AtomSize for Chpl<'_> {
     fn size(&self) -> Size {
         let data_len = match &self.data {
@@ -89,7 +91,14 @@ impl AtomSize for Chpl<'_> {
                 v.iter().map(|c| ITEM_HEADER_SIZE + title_len(&c.title) as u64).sum::<u64>()
             }
         };
-        let content_len = HEADER_SIZE_V0 + data_len;
+        
+        let header_size = if VERSION == 1 {
+            HEADER_SIZE_V1
+        } else {
+            HEADER_SIZE_V0
+        };
+
+        let content_len = header_size + data_len;
         Size::from(content_len)
     }
 }
@@ -97,10 +106,19 @@ impl AtomSize for Chpl<'_> {
 impl WriteAtom for Chpl<'_> {
     fn write_atom(&self, writer: &mut impl Write, _changes: &[Change<'_>]) -> crate::Result<()> {
         self.write_head(writer)?;
-        head::write_full(writer, 0, [0; 3])?;
+        
+        if VERSION == 1 {
+            head::write_full(writer, 1, [0; 3])?;
+        } else {
+            head::write_full(writer, 0, [0; 3])?;
+        }
 
         match &self.data {
             ChplData::Owned(v) => {
+                if VERSION == 1 {
+                    writer.write_be_u32(0)?;
+                }
+
                 writer.write_u8(v.len() as u8)?;
                 for c in v.iter() {
                     writer.write_be_u64(c.start)?;
@@ -111,6 +129,10 @@ impl WriteAtom for Chpl<'_> {
                 }
             }
             ChplData::Borrowed(timescale, chapters) => {
+                if VERSION == 1 {
+                    writer.write_be_u32(0)?;
+                }
+
                 writer.write_u8(chapters.len() as u8)?;
                 for c in chapters.iter() {
                     let start = unscale_duration(*timescale, c.start);

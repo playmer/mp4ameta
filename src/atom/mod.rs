@@ -1018,11 +1018,15 @@ fn update_userdata<'a>(
 
         let dinf = minf.dinf.get_or_insert_default();
         let dref = dinf.dref.get_or_insert_default();
-        dref.url.get_or_insert_with(Url::track);
+        let url = dref.url.get_or_insert_with(Url::track);
+        url.state.replace_existing();
+        url.data = Url::track().data;
 
         let stbl = minf.stbl.get_or_insert_default();
         let stsd = stbl.stsd.get_or_insert_default();
-        stsd.text.get_or_insert_with(Text::media_chapter);
+        stsd.state.replace_existing();
+        let text = stsd.text.get_or_insert_with(Text::media_chapter);
+        text.data = Text::media_chapter().data;
 
         let stts = stbl.stts.get_or_insert_default();
         stts.state.replace_existing();

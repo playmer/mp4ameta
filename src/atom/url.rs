@@ -43,7 +43,7 @@ impl Url {
     pub fn track() -> Self {
         Self {
             state: State::Insert,
-            data: Cow::Borrowed(&[0x01, 0x00, 0x00, 0x00]),
+            data: Cow::Borrowed(&[0x00, 0x00, 0x00, 0x01]),
         }
     }
 }
@@ -55,5 +55,15 @@ impl LeafAtomCollectChanges for Url {
 
     fn atom_ref(&self) -> AtomRef<'_> {
         AtomRef::Url(self)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn track_is_self_contained() {
+        assert_eq!(Url::track().data.as_ref(), &[0, 0, 0, 1]);
     }
 }

@@ -55,6 +55,8 @@ impl Text {
             state: State::Insert,
             data: Cow::Borrowed(&[
                 // Text Sample Entry
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // reserved
+                0x00, 0x01, // data reference index
                 0x00, 0x00, 0x00, 0x01, // displayFlags
                 0x00, 0x00, // horizontal and vertical justification
                 0x00, 0x00, 0x00, 0x00, // bg color rgba
@@ -97,5 +99,19 @@ impl Text {
                 0x00, 0x00, //
             ]),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn chapter_sample_entry_has_sample_entry_header() {
+        let text = Text::media_chapter();
+
+        assert_eq!(&text.data[..6], &[0; 6]);
+        assert_eq!(&text.data[6..8], &[0, 1]);
+        assert_eq!(&text.data[8..12], &[0, 0, 0, 1]);
     }
 }
